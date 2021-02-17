@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
+	"net"
 	"net/http"
+	"os"
+	"time"
 )
 
 var host string = "0.0.0.0"
@@ -21,5 +24,24 @@ func main() {
 
 	addr := host + ":" + fmt.Sprint(port)
 
-	_ = http.ListenAndServe(addr, router)
+	fmt.Println("Server is starting...")
+
+	go NotifyServerStarted(addr)
+
+	err := http.ListenAndServe(addr, router)
+
+	if err != nil {
+		fmt.Println("The server failed to start")
+		os.Exit(1)
+	}
+}
+
+func NotifyServerStarted(addr string) {
+	for {
+		if _, err := net.DialTimeout("tcp", addr, time.Millisecond); err == nil {
+			break
+		}
+	}
+
+	fmt.Println("Server is online!")
 }
