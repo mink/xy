@@ -12,9 +12,7 @@ import (
 	"time"
 )
 
-var host string
-var port int
-var addr string
+var config Config
 
 func main() {
 	fmt.Println("xy")
@@ -22,7 +20,6 @@ func main() {
 	LoadEnvironment()
 	ParseFlags()
 
-	addr = CreateSocketAddress()
 	router := mux.NewRouter()
 
 	fmt.Println("Server is starting...")
@@ -39,28 +36,26 @@ func LoadEnvironment() {
 		os.Exit(1)
 	}
 
-	host = os.Getenv("HOST")
-	port, err = strconv.Atoi(os.Getenv("PORT"))
+	host := os.Getenv("HOST")
+	port, err := strconv.Atoi(os.Getenv("PORT"))
 
 	if err != nil {
 		fmt.Println("Error parsing PORT environment variable")
 		os.Exit(1)
 	}
+
+	config = Config{Host: host, Port: port}
 }
 
 func ParseFlags() {
-	flag.IntVar(&port, "port", port, "Port the HTTP server will listen on")
-	flag.StringVar(&host, "host", host, "Host the HTTP server will listen on")
+	flag.IntVar(&config.Port, "port", config.Port, "Port the HTTP server will listen on")
+	flag.StringVar(&config.Host, "host", config.Host, "Host the HTTP server will listen on")
 	flag.Parse()
-}
-
-func CreateSocketAddress() string {
-	return host + ":" + fmt.Sprint(port)
 }
 
 func NotifyServerStarted() {
 	for {
-		if _, err := net.DialTimeout("tcp", addr, time.Millisecond); err == nil {
+		if _, err := net.DialTimeout("tcp", config.SocketAddress(), time.Millisecond); err == nil {
 			break
 		}
 	}
@@ -68,7 +63,7 @@ func NotifyServerStarted() {
 }
 
 func StartServer(router *mux.Router) {
-	err := http.ListenAndServe(addr, router)
+	err := http.ListenAndServe(config.SocketAddress(), router)
 
 	if err != nil {
 		fmt.Println("The server failed to start")
