@@ -4,22 +4,25 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
-var host string = "0.0.0.0"
-var port int = 8000
+var host string
+var port int
 var addr string
 
 func main() {
 	fmt.Println("xy")
 
+	LoadEnvironment()
 	ParseFlags()
-	addr = CreateSocketAddress()
 
+	addr = CreateSocketAddress()
 	router := mux.NewRouter()
 
 	fmt.Println("Server is starting...")
@@ -27,6 +30,22 @@ func main() {
 	go NotifyServerStarted()
 
 	StartServer(router)
+}
+
+func LoadEnvironment() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+		os.Exit(1)
+	}
+
+	host = os.Getenv("HOST")
+	port, err = strconv.Atoi(os.Getenv("PORT"))
+
+	if err != nil {
+		fmt.Println("Error parsing PORT environment variable")
+		os.Exit(1)
+	}
 }
 
 func ParseFlags() {
