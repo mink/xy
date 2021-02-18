@@ -59,7 +59,7 @@ func NotifyServerStarted() {
 			break
 		}
 	}
-	fmt.Println("Server is online!")
+	fmt.Println("Server is online!", "(" + config.SocketAddress() + ")")
 }
 
 func StartServer(router *mux.Router) {
