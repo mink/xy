@@ -8,13 +8,11 @@ import (
 	"os"
 	"time"
 	"xy/pkg/cfg"
+	"xy/pkg/handlers"
 )
 
 func RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "index")
-	})
+	router.HandleFunc("/", handlers.Index)
 }
 
 func NotifyStarted(config cfg.Config) {
