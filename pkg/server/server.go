@@ -13,6 +13,7 @@ import (
 
 func RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/", handlers.Index)
+	router.HandleFunc("/login", handlers.Login)
 }
 
 func NotifyStarted(config cfg.Config) {

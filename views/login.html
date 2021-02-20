@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>xy</title>
+</head>
+<body>
+<h1>xy</h1>
+{{ if .Error }}
+<p>{{.Error}}</p>
+{{ end }}
+<form method="post" action="login">
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" />
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" />
+    <button>Login</button>
+</form>
+</body>
+</html>
