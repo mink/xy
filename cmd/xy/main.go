@@ -16,6 +16,8 @@ func main() {
 	env.LoadEnvironment(&config)
 	env.ParseFlags(&config)
 
+	cfg.LoadDatabase(&config)
+
 	// create router & bind routes
 	router := mux.NewRouter()
 	server.RegisterRoutes(router)
