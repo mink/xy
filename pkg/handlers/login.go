@@ -12,6 +12,11 @@ type LoginTemplateData struct {
 	Error string
 }
 
+type User struct {
+	Email string `valid:"Email; MaxSize(100)"`
+	Password  string `valid:"Required"`
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("views/login.html")
@@ -24,23 +29,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 
-		email := r.FormValue("email")
-		password := r.FormValue("password")
+		user := User{Email: r.FormValue("email"), Password: r.FormValue("password")}
 
 		valid := validation.Validation{}
-		valid.Required(email, "email")
-		valid.Required(password, "password")
+		valid.Valid(&user)
 
 		if valid.HasErrors() {
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			for _, err := range valid.Errors {
-				data.Error = err.Key + "" + err.Message
+				data.Error = err.Message
+				break
 			}
 			_ = t.Execute(w, data)
 			return
 		}
 
-		if !checkCredentials(email, password) {
+		if !checkCredentials(user) {
 			w.WriteHeader(http.StatusForbidden)
 			data.Error = "Invalid credentials"
 		} else {
@@ -52,16 +56,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_ = t.Execute(w, data)
 }
 
-func checkCredentials(email string, password string) bool {
-	// temp user model
-	type User struct {
-		Email string
-		Password  int
-	}
-
-	var user User
+func checkCredentials(user User) bool {
 
 	query, _ := orm.NewQueryBuilder("mysql")
+
+	var userToCheck User
 
 	query.Select("users.email").
 		From("users").
@@ -69,8 +68,8 @@ func checkCredentials(email string, password string) bool {
 		Limit(1)
 
 	orm.NewOrm().
-		Raw(query.String(), email, password).
-		QueryRow(&user)
+		Raw(query.String(), user.Email, user.Email).
+		QueryRow(&userToCheck)
 
-	return user.Email == email
+	return userToCheck.Email == user.Email
 }
