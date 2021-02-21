@@ -19,6 +19,7 @@ type LoginFormData struct {
 }
 
 type User struct {
+	Id int
 	Email string `valid:"Email; MaxSize(100)"`
 	Password  string `valid:"Required"`
 }
@@ -35,7 +36,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 
-		user := User{Email: r.FormValue("email"), Password: r.FormValue("password")}
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+
+		user := User{Email: email, Password: password}
 
 		valid := validation.Validation{}
 		valid.Valid(&user)
@@ -52,8 +56,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if !checkCredentials(user) {
 			w.WriteHeader(http.StatusForbidden)
+		if !checkCredentials(&user) {
 			data.Error = "Invalid credentials"
 		} else {
 			w.WriteHeader(http.StatusOK)
@@ -64,20 +68,27 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_ = t.Execute(w, data)
 }
 
-func checkCredentials(user User) bool {
-
-	query, _ := orm.NewQueryBuilder("mysql")
+func checkCredentials(user *User) bool {
 
 	var userToCheck User
 
-	query.Select("users.email").
+	query, _ := orm.NewQueryBuilder("mysql")
+
+	query.Select("users.id, users.email").
 		From("users").
 		Where("email = ? AND password = ?").
 		Limit(1)
 
 	orm.NewOrm().
-		Raw(query.String(), user.Email, user.Email).
+		Raw(query.String(), user.Email, user.Password).
 		QueryRow(&userToCheck)
 
-	return userToCheck.Email == user.Email
+	if userToCheck.Email != user.Email {
+		return false
+	}
+
+	// set user id
+	user.Id = userToCheck.Id
+
+	return true
 }
