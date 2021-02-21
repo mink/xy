@@ -8,6 +8,11 @@
 {{ if .Error }}
 <p>{{.Error}}</p>
 {{ end }}
+
+{{if eq .Session.Authenticated true}}
+<p>Welcome back user ID {{.Session.UserId}}</p>
+{{end}}
+{{if eq .Session.Authenticated false}}
 <form method="post" action="login">
     <label for="email">Email</label>
     <input type="email" name="email" id="email" value="{{.Form.Email}}" />
@@ -15,5 +20,6 @@
     <input type="password" name="password" id="password" />
     <button>Login</button>
 </form>
+{{end}}
 </body>
 </html>

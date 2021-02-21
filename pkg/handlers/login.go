@@ -4,13 +4,21 @@ import (
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/core/validation"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/sessions"
 	"html/template"
 	"net/http"
+	"xy/pkg/session"
 )
 
 type LoginTemplateData struct {
 	Error string
 	Form LoginFormData
+	Session SessionData
+}
+
+type SessionData struct {
+	Authenticated bool
+	UserId int
 }
 
 // plaintext password will not be passed back to template
@@ -24,13 +32,30 @@ type User struct {
 	Password  string `valid:"Required"`
 }
 
+var store *sessions.CookieStore = session.CreateSessionStore()
+
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("views/login.html")
 
 	data := LoginTemplateData{}
 
+	session, _ := store.Get(r, "session")
+
+	if session.Values["authenticated"] == nil {
+		session.Values["authenticated"] = false
+	}
+
+	if session.Values["user_id"] == nil {
+		session.Values["user_id"] = 0
+	}
+
+	data.Session = SessionData{}
+	data.Session.Authenticated = session.Values["authenticated"].(bool)
+	data.Session.UserId = session.Values["user_id"].(int)
+
 	if r.Method == "GET" {
+		session.Save(r, w)
 		w.WriteHeader(http.StatusOK)
 	}
 
@@ -47,21 +72,29 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		data.Form = LoginFormData{Email: user.Email}
 
 		if valid.HasErrors() {
-			w.WriteHeader(http.StatusUnprocessableEntity)
 			for _, err := range valid.Errors {
 				data.Error = err.Message
 				break
 			}
+			session.Save(r, w)
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			_ = t.Execute(w, data)
 			return
 		}
 
-			w.WriteHeader(http.StatusForbidden)
 		if !checkCredentials(&user) {
 			data.Error = "Invalid credentials"
+			session.Save(r, w)
+			w.WriteHeader(http.StatusForbidden)
+
 		} else {
-			w.WriteHeader(http.StatusOK)
 			data.Error = "Success"
+
+			// store user to session
+			session.Values["authenticated"] = true
+			session.Values["user_id"] = user.Id
+			session.Save(r, w)
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 
