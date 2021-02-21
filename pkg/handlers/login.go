@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/beego/beego/v2/client/orm"
+	"github.com/beego/beego/v2/core/validation"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"net/http"
@@ -26,21 +27,23 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		switch {
-		case len(email) == 0:
+		valid := validation.Validation{}
+		valid.Required(email, "email")
+		valid.Required(password, "password")
+
+		if valid.HasErrors() {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			data.Error = "Enter your email address"
-			break
-		case len(password) == 0:
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			data.Error = "Enter your password"
-			break
-		default:
-			if !checkCredentials(email, password) {
-				w.WriteHeader(http.StatusForbidden)
-				data.Error = "Invalid credentials"
-				break
+			for _, err := range valid.Errors {
+				data.Error = err.Key + "" + err.Message
 			}
+			_ = t.Execute(w, data)
+			return
+		}
+
+		if !checkCredentials(email, password) {
+			w.WriteHeader(http.StatusForbidden)
+			data.Error = "Invalid credentials"
+		} else {
 			w.WriteHeader(http.StatusOK)
 			data.Error = "Success"
 		}
