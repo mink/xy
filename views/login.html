@@ -10,7 +10,7 @@
 {{ end }}
 <form method="post" action="login">
     <label for="email">Email</label>
-    <input type="email" name="email" id="email" />
+    <input type="email" name="email" id="email" value="{{.Form.Email}}" />
     <label for="password">Password</label>
     <input type="password" name="password" id="password" />
     <button>Login</button>

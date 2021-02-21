@@ -10,6 +10,12 @@ import (
 
 type LoginTemplateData struct {
 	Error string
+	Form LoginFormData
+}
+
+// plaintext password will not be passed back to template
+type LoginFormData struct {
+	Email string
 }
 
 type User struct {
@@ -33,6 +39,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		valid := validation.Validation{}
 		valid.Valid(&user)
+
+		data.Form = LoginFormData{Email: user.Email}
 
 		if valid.HasErrors() {
 			w.WriteHeader(http.StatusUnprocessableEntity)
